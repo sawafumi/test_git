@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>シンプルシューティング</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="layout__panel">
+        <header class="layout__header">
+          <h1>シンプルシューティング</h1>
+          <p class="instructions">
+            ← → で移動 / スペースキーでショット<br />
+            敵を倒してスコアを稼ごう！
+          </p>
+          <div class="hud">
+            <div class="hud__item">スコア: <span id="score">0</span></div>
+            <div class="hud__item">ライフ: <span id="lives">3</span></div>
+            <div class="hud__item">ウェーブ: <span id="wave">1</span></div>
+          </div>
+        </header>
+        <canvas id="game" width="480" height="640" role="img" aria-label="シンプルシューティングゲーム"></canvas>
+        <button id="restart" class="restart" hidden>もう一度遊ぶ</button>
+      </section>
+      <aside class="layout__panel layout__panel--info">
+        <h2>遊び方</h2>
+        <ol>
+          <li>← → キーで自機を左右に動かします。</li>
+          <li>スペースキーで弾を発射します。</li>
+          <li>敵に当てるとスコアが増えます。</li>
+          <li>敵や弾に当たるとライフが減ります。ライフがなくなるとゲームオーバーです。</li>
+        </ol>
+        <p>
+          ウェーブが進むごとに敵のスピードが上がり、よりスリリングになります。集中して高スコアを目指しましょう！
+        </p>
+      </aside>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
