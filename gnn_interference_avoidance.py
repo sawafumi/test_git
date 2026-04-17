@@ -172,7 +172,14 @@ def train_risk_model(model: RiskGNN, scene: Scene, samples: int, clearance: floa
     return sum(losses) / max(len(losses), 1)
 
 
-def run_exploration(scene: Scene, model: RiskGNN, steps: int, clearance: float, risk_weight: float):
+def run_exploration(
+    scene: Scene,
+    model: RiskGNN,
+    steps: int,
+    clearance: float,
+    risk_weight: float,
+    use_risk: bool = True,
+):
     robot = scene.robot_start
     visited: set[tuple[int, int]] = {robot}
     inspected = [0] * len(scene.works)
@@ -192,7 +199,8 @@ def run_exploration(scene: Scene, model: RiskGNN, steps: int, clearance: float, 
             gain = observe_gain((nx, ny), visited, scene.size)
             revisit_penalty = 1.2 if (nx, ny) in visited else 0.0
             stay_penalty = 0.8 if (nx, ny) == robot else 0.0
-            score = gain - risk_weight * risk - revisit_penalty - stay_penalty
+            effective_risk = risk if use_risk else 0.0
+            score = gain - risk_weight * effective_risk - revisit_penalty - stay_penalty
             candidates.append((score, risk, (nx, ny)))
 
         candidates.sort(key=lambda t: t[0], reverse=True)
@@ -201,7 +209,7 @@ def run_exploration(scene: Scene, model: RiskGNN, steps: int, clearance: float, 
         nxt = robot
         risk = 1.0
         for score, cand_risk, cand in candidates:
-            if in_bounds(cand[0], cand[1], scene.size) and not is_interfering(cand[0], cand[1], scene, clearance):
+            if in_bounds(cand[0], cand[1], scene.size) and (not use_risk or not is_interfering(cand[0], cand[1], scene, clearance)):
                 nxt = cand
                 risk = cand_risk
                 break
@@ -237,6 +245,7 @@ def main():
     p.add_argument("--train-samples", type=int, default=1500)
     p.add_argument("--hidden", type=int, default=24)
     p.add_argument("--risk-weight", type=float, default=3.0)
+    p.add_argument("--compare-baseline", action="store_true", help="リスク未使用（ベースライン）と比較表示する")
     p.add_argument("--seed", type=int, default=7)
     args = p.parse_args()
 
@@ -258,6 +267,7 @@ def main():
         steps=args.steps,
         clearance=args.clearance,
         risk_weight=args.risk_weight,
+        use_risk=True,
     )
 
     print("--- Robot x Work 干渉回避探索 ---")
@@ -265,6 +275,20 @@ def main():
     print(f"explored_ratio={explored:.3f}")
     print(f"inspected_rate={inspected_rate:.3f}")
     print(f"interference_events={interference}")
+
+    if args.compare_baseline:
+        b_explored, b_inspected, b_interference = run_exploration(
+            scene,
+            model,
+            steps=args.steps,
+            clearance=args.clearance,
+            risk_weight=args.risk_weight,
+            use_risk=False,
+        )
+        print("\n--- Baseline (risk未使用) ---")
+        print(f"explored_ratio={b_explored:.3f}")
+        print(f"inspected_rate={b_inspected:.3f}")
+        print(f"interference_events={b_interference}")
 
 
 if __name__ == "__main__":
